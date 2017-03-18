@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import socket
+import socket, time
 import sys
-from thread import *
+from _thread import *
 
 HOST = ''   # Symbolic name meaning all available interfaces
-PORT = 8824 # Arbitrary non-privileged port
+PORT = 8873 # Arbitrary non-privileged port
 users=[]
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print ('Socket created')
@@ -14,19 +14,19 @@ print ('Socket created')
 #Bind socket to local host and port
 try:
     s.bind((HOST, PORT))
-except socket.error , msg:
-    print ('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
+except socket.error as msg:
+    print ('Bind failed. Error Code: ', msg)
     sys.exit()
 
 print ('Socket bind complete')
 
 #Start listening on socket
-s.listen(10)
+s.listen(20)
 print ('Socket now listening')
 
 #send masseg to other users
 def send(data,conn):
-    data=data.replace('\n','')
+    data=(data.replace('\n','')) #.decode()
     print ('Sending')
     if len(users)>=2:
         for i in range(len(users)):
@@ -36,11 +36,19 @@ def send(data,conn):
             else:
                 name='new'
         for i in range(len(users)):
-            if users[i][0]<>conn:
-                users[i][0].sendall(name + ': '+ data)
+            if users[i][0]!=conn:
+                users[i][0].sendall((name + ': '+ data).encode())
     elif len(users)==1 and users[0][0]==conn and data.find("/exit")==-1:
-        users[0][0].sendall('You are alone \n')
+        users[0][0].sendall(('You are alone \n').encode())
 
+#send list of users online
+def users_online():
+    time.sleep(1)
+    data_users='Users online:|'
+    for i in range(len(users)):
+        data_users+=str(users[i][1])+'|'
+    for i in range(len(users)):
+        users[i][0].sendall((data_users[:len(data_users)-1]).encode())
 #function for handling connections. This will be used to create threads
 def clientthread(conn):
     #sending message to connected client
@@ -48,33 +56,31 @@ def clientthread(conn):
         users.index(conn)
     #ask user his name, and save to list
     except ValueError:
-        conn.sendall("What is your name?")
+        conn.sendall(("What is your name?").encode())
         name = "/users"
         while name == "/users":
-            name= conn.recv(1024).replace('\n','').replace('\r','')
+            name= (conn.recv(1024)).decode().replace('\n','').replace('\r','')
             users.append([conn,name])
-            conn.sendall("He "+name+'\r')
+            conn.sendall(("He "+name+'\r').encode())
+            users_online()
     #infinite loop so that function do not terminate and thread do not end.
     while True:
         #receiving from client
-        data = conn.recv(1024)
+        data = conn.recv(1024).decode()
         #exit from chat, and send message about exit to other users
         if data.find("/exit")>=0:
-            reply='Disconnected with ' + addr[0] + ':' + str(addr[1])
-            send(reply+'\n', conn)
+            reply=('Disconnected with ' + addr[0] + ':' + str(addr[1]))
+            send((reply+'\n'), conn)
             for i in range(0,len(users)):
                 if users[i][0]==conn:
                     users.remove(users[i])
+                    users_online()
                     break
             print (reply)
             break
         #print users online
         elif data.find("/users")>=0:
-            data_users='Users online:|'
-            for i in range(len(users)):
-                #if users[i][0]<>conn:
-                data_users+=str(users[i][1])+'|'
-            conn.sendall(data_users[:len(data_users)-1])
+            users_online()
         #send message
         else:
             send(data,conn)
