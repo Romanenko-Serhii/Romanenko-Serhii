@@ -3,12 +3,10 @@
 
 import sys, time
 from PyQt5.QtWidgets import (QWidget, QPushButton, QLabel, QLineEdit,
-     QGridLayout, QApplication)
-from PyQt5.QtCore import *#(Qt, QThread, QThreadPool, pyqtSignal)
+     QGridLayout, QApplication, QInputDialog, QScrollArea)
+from PyQt5.QtCore import (Qt, QThread, QThreadPool, pyqtSignal, pyqtSlot)
 
 import socket
-import threading
-from threading import Thread
 
 class Example(QWidget):
     mySignal = pyqtSignal(str)
@@ -16,19 +14,19 @@ class Example(QWidget):
         super().__init__()
         self.initUI()
         self.sock=socket.socket()
-        self.sock.connect(('localhost',8824))
+        self.sock.connect(('localhost',8873))
         self.workerThread = Read(self.sock)
-        self.workerThread.mySignal.connect(self.test)
+        self.workerThread.mySignal.connect(self.logics)
         self.workerThread.start()
 
-        self.usersOnline = CheckUsersOnline(self.sock)
-        self.usersOnline.start()
         self.chat_data = ''
 
     def initUI(self):
         self.chat = QLabel(self)
         self.chat.setStyleSheet("QWidget { background-color: white }")
         self.chat.setAlignment(Qt.AlignLeft)
+
+
 
         self.user = QLabel(self)
         self.user.setStyleSheet("QWidget { background-color: white }")
@@ -53,22 +51,27 @@ class Example(QWidget):
         self.setWindowTitle('TCP Chat')
         self.show()
 
-    def test(self, text):
+    def logics(self, text):
         if text.find("Users online")>=0:
             user_online=''
             for user in text.split("|"):
                 user_online += user+"\n"
             self.user.setText(user_online)
+        elif text.find("What is your name?")>=0:
+            self.showLogin()
         else:
-            self.chat_data = self.chat_data +text+'\n'
-            self.chat.setText(self.chat_data)
+            self.write_to_chat(text)
+
+    def write_to_chat(self, text):
+        self.chat_data = self.chat_data +text+'\n'
+        self.chat.setText(self.chat_data)
 
 
     @pyqtSlot()
     def on_click(self):
         data = self.textSend.text()
         self.textSend.clear()
-        self.test('You: ' + data)
+        self.logics('You: ' + data)
         self.sock.send(data.encode())
         if data.find("/exit")>=0:
             self.sock.close()
@@ -79,6 +82,19 @@ class Example(QWidget):
             self.close()
         if event.key() == Qt.Key_Return:
             self.on_click()
+
+    def showLogin(self):
+
+        text, ok = QInputDialog.getText (self, 'Login', 'Enter your name:')
+        if ok:
+            self.sock.send(text.encode())
+
+    def closeEvent(self, event):
+        data = "/exit"
+        self.sock.send(data.encode())
+        self.sock.close()
+        sys.exit()
+        event.accept()
 
 class Read(QThread):
     mySignal = pyqtSignal(str)
@@ -100,7 +116,7 @@ class Read(QThread):
                     self.mySignal.emit(data)
             except socket.error:
                 break
-
+#not required
 class CheckUsersOnline(QThread):
     def __init__(self, sock):
         super().__init__()
@@ -118,4 +134,3 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Example()
     sys.exit(app.exec_())
-    sock.close()
