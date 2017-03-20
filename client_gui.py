@@ -23,19 +23,6 @@ class Example(QWidget):
         self.chat_data = ''
 
     def initUI(self):
-    #    self.chat = QLabel(self)
-    #    self.chat.setStyleSheet("QWidget { background-color: white }")
-    #    self.chat.setAlignment(Qt.AlignLeft)
-
-    #    self.scroll = QScrollArea(self)
-    #    self.scroll.setWidgetResizable(True)
-    #    self.scroll.setGeometry(QRect(15, 10, 500, 540))
-    #    self.scroll.setWidget(self.chat)
-
-    #    self.user = QLabel(self)
-    #    self.user.setStyleSheet("QWidget { background-color: white }")
-    #    self.user.setAlignment(Qt.AlignLeft)
-
         self.chat = QTextBrowser(self)
         self.scrollChat = self.chat.verticalScrollBar()
 
