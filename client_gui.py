@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import sys, time
-from PyQt5.QtWidgets import (QWidget, QPushButton, QLabel, QLineEdit,
-     QGridLayout, QApplication, QInputDialog, QScrollArea, QTextBrowser)
-from PyQt5.QtCore import (Qt, QThread, QThreadPool, pyqtSignal, pyqtSlot,
-     QRect)
-from PyQt5.QtGui import (QTextCursor)
+from PyQt5.QtWidgets import (QWidget, QPushButton, QLineEdit,
+     QGridLayout, QApplication, QInputDialog, QTextBrowser)
+from PyQt5.QtCore import (Qt, QThread, QThreadPool, pyqtSignal, pyqtSlot)
+#from PyQt5.QtGui import (QTextCursor)
 import socket
 
 class Example(QWidget):
@@ -45,7 +44,7 @@ class Example(QWidget):
 
         self.setLayout(grid)
 
-        self.setGeometry(300, 300, 700, 600)
+        self.setGeometry(300, 300, 750, 500)
         self.setWindowTitle('TCP Chat')
         self.show()
 
