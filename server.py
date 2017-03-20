@@ -61,7 +61,7 @@ def clientthread(conn):
         while name == "/users":
             name= (conn.recv(1024)).decode().replace('\n','').replace('\r','')
             users.append([conn,name])
-            conn.sendall(("He "+name+'\r').encode())
+            conn.sendall(("Hi "+name+'\r').encode())
             users_online()
     #infinite loop so that function do not terminate and thread do not end.
     while True:
